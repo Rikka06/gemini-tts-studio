@@ -316,24 +316,24 @@
           </div>
 
           <div id="geminiExtra">
-            <div class="field">
-              <div class="f-head">
-                <span class="f-label">停顿密度</span>
-                <span class="f-note">影响朗读节奏</span>
-                <span class="f-val" id="valPause">50</span>
+            <div class="field-pair">
+              <div class="field">
+                <div class="f-head">
+                  <span class="f-label">停顿密度</span>
+                  <span class="f-val" id="valPause">50</span>
+                </div>
+                <input type="range" id="rngPause" min="0" max="100" step="1" value="50" aria-label="停顿密度">
+                <div class="f-ticks"><span>紧凑</span><span>自然</span><span>舒缓</span></div>
               </div>
-              <input type="range" id="rngPause" min="0" max="100" step="1" value="50" aria-label="停顿密度">
-              <div class="f-ticks"><span>紧凑</span><span>自然</span><span>舒缓</span></div>
-            </div>
 
-            <div class="field">
-              <div class="f-head">
-                <span class="f-label">情绪强度</span>
-                <span class="f-note">影响语气起伏</span>
-                <span class="f-val" id="valEmotion">60</span>
+              <div class="field">
+                <div class="f-head">
+                  <span class="f-label">情绪强度</span>
+                  <span class="f-val" id="valEmotion">60</span>
+                </div>
+                <input type="range" id="rngEmotion" min="0" max="100" step="1" value="60" aria-label="情绪强度">
+                <div class="f-ticks"><span>克制</span><span>自然</span><span>饱满</span></div>
               </div>
-              <input type="range" id="rngEmotion" min="0" max="100" step="1" value="60" aria-label="情绪强度">
-              <div class="f-ticks"><span>克制</span><span>自然</span><span>饱满</span></div>
             </div>
 
             <div class="section-label">

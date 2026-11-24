@@ -22,33 +22,35 @@
 </head>
 <body>
   <div class="m-shell" id="mShell">
-    <!-- 顶部极简状态栏：仅展示标题、引擎切换与主题/Key状态 -->
+    <!-- 顶部极简状态栏：第一行标题与快捷图标，第二行全宽引擎切换器（杜绝窄屏挤压重叠） -->
     <header class="m-topbar" id="mTopbar">
-      <div class="m-brand">
-        <div class="m-logo" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M4 10v4"></path><path d="M8 6v12"></path><path d="M12 9v6"></path><path d="M16 5v14"></path><path d="M20 11v2"></path>
-          </svg>
+      <div class="m-top-row">
+        <div class="m-brand">
+          <div class="m-logo" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 10v4"></path><path d="M8 6v12"></path><path d="M12 9v6"></path><path d="M16 5v14"></path><path d="M20 11v2"></path>
+            </svg>
+          </div>
+          <div class="m-brand-text">
+            <div class="m-title" id="mHeaderTitle">合成工作台</div>
+            <div class="m-subtitle" id="mHeaderSub">gemini-3.8-flash-tts</div>
+          </div>
         </div>
-        <div>
-          <div class="m-title" id="mHeaderTitle">合成工作台</div>
-          <div class="m-subtitle" id="mHeaderSub">Gemini 3.8 Flash TTS</div>
-        </div>
+
+        <button class="m-icon-btn" id="mBtnKeyJump" type="button" aria-label="Key 池状态">
+          <span class="m-key-dot" id="mKeyDot"></span>
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="4.5"></circle><path d="m21 2-9.6 9.6"></path><path d="m15.5 7.5 3 3L22 7l-3-3"></path></svg>
+        </button>
+
+        <button class="m-icon-btn" id="mBtnTheme" type="button" aria-label="切换主题">
+          <svg id="mThemeIcon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></svg>
+        </button>
       </div>
 
       <div class="m-engine-pill" id="mEngineSeg" role="tablist" aria-label="语音引擎">
-        <button type="button" role="tab" data-engine="gemini" aria-selected="true">Gemini</button>
-        <button type="button" role="tab" data-engine="fish" aria-selected="false">Fish</button>
+        <button type="button" role="tab" data-engine="gemini" aria-selected="true">Gemini 3.8 Flash TTS</button>
+        <button type="button" role="tab" data-engine="fish" aria-selected="false">Fish Audio</button>
       </div>
-
-      <button class="m-icon-btn" id="mBtnKeyJump" type="button" aria-label="Key 池状态">
-        <span class="m-key-dot" id="mKeyDot"></span>
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="4.5"></circle><path d="m21 2-9.6 9.6"></path><path d="m15.5 7.5 3 3L22 7l-3-3"></path></svg>
-      </button>
-
-      <button class="m-icon-btn" id="mBtnTheme" type="button" aria-label="切换主题">
-        <svg id="mThemeIcon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></svg>
-      </button>
     </header>
 
     <!-- L1 主视图容器 -->
