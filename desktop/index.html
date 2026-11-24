@@ -496,6 +496,7 @@
           <div>
             <b>说明：</b>Fish 音色搜索/试听已直连官方 CORS 接口；但 <code>POST /v1/tts</code> 浏览器预检需经本地 <code>server.py</code> (<code>http://127.0.0.1:8080/</code>) 或自建 Cloudflare Worker（项目内已附带 <code>deploy/cloudflare-worker.js</code>）。
             <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
+              <button class="mini-btn ghost" id="btnUseCloudCors" type="button">使用云端 Worker</button>
               <button class="mini-btn ghost" id="btnUseLocalCors" type="button">填入本地 8080</button>
               <button class="mini-btn ghost" id="btnCopyWorker" type="button">复制 Worker 脚本</button>
             </div>

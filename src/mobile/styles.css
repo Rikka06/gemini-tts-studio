@@ -285,7 +285,7 @@ svg{display:block;}
 
 .m-row-between{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;}
 .m-row-label{font-size:13.5px;font-weight:640;}
-.m-row-gap{display:flex;align-items:center;gap:8px;}
+.m-row-gap{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
 .m-key-list{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;}
 .m-krow{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:var(--m-surface-1);border:1px solid var(--m-line);}
 .m-krow-main{flex:1 1 auto;min-width:0;}

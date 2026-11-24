@@ -13,11 +13,13 @@ import {
   stamp,
 } from "../shared/audio";
 import {
+  CLOUD_DEFAULT_CORS,
   FISH_CHUNK,
   FISH_MODEL_OPTIONS,
   FISH_PRESET_VOICES,
   FISH_TAGS,
   GEMINI_CHUNK,
+  LOCAL_DEFAULT_CORS,
   MAX_CHARS,
   PLAY_SPEEDS,
   SAMPLE_TEXT,
@@ -46,7 +48,6 @@ import {
 } from "../shared/keyPool";
 import {
   createInitialState,
-  getDefaultCorsForEnv,
   getInitialTheme,
   loadStateFromStorage,
   saveStateToStorage,
@@ -185,6 +186,7 @@ const el = {
   btnSaveCors: $("btnSaveCors"),
   btnTestCors: $("btnTestCors"),
   proxyTestBadge: $("proxyTestBadge"),
+  btnUseCloudCors: $("btnUseCloudCors"),
   btnUseLocalCors: $("btnUseLocalCors"),
   btnCopyWorker: $("btnCopyWorker"),
 
@@ -1681,8 +1683,17 @@ function bindEvents(): void {
     toast(res.ok ? "ok" : "err", res.ok ? "代理连通正常" : "代理连通失败", res.message);
   });
 
+  el.btnUseCloudCors.addEventListener("click", () => {
+    el.corsInput.value = CLOUD_DEFAULT_CORS;
+    state.cors = CLOUD_DEFAULT_CORS;
+    state.corsExplicit = false;
+    saveStateToStorage(state);
+    el.corsStateText.textContent = `CORS 代理：${state.cors}`;
+    toast("ok", "已启用云端 Cloudflare Worker", state.cors);
+  });
+
   el.btnUseLocalCors.addEventListener("click", () => {
-    el.corsInput.value = getDefaultCorsForEnv() || "http://127.0.0.1:8080/";
+    el.corsInput.value = LOCAL_DEFAULT_CORS;
   });
 
   el.btnCopyWorker.addEventListener("click", async () => {

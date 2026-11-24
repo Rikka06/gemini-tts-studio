@@ -1,4 +1,5 @@
 import {
+  CLOUD_DEFAULT_CORS,
   DEFAULT_FISH_PARAMS,
   GEMINI_MODEL,
   LOCAL_DEFAULT_CORS,
@@ -19,12 +20,12 @@ export function isLoopbackHost(host: string): boolean {
 }
 
 export function getDefaultCorsForEnv(): string {
-  if (typeof window === "undefined") return "";
+  if (typeof window === "undefined") return CLOUD_DEFAULT_CORS;
   const { protocol, hostname } = window.location;
   if (protocol === "file:" || isLoopbackHost(hostname)) {
     return LOCAL_DEFAULT_CORS;
   }
-  return "";
+  return CLOUD_DEFAULT_CORS;
 }
 
 export function createInitialState(): AppState {

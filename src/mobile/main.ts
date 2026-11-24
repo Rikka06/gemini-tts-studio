@@ -46,6 +46,7 @@ import {
 } from "../shared/keyPool";
 import {
   createInitialState,
+  getDefaultCorsForEnv,
   getInitialTheme,
   loadStateFromStorage,
   saveStateToStorage,
@@ -134,6 +135,7 @@ const el = {
   mCorsInput: $<HTMLInputElement>("mCorsInput"),
   mBtnSaveCors: $("mBtnSaveCors"),
   mBtnTestCors: $("mBtnTestCors"),
+  mBtnDefaultCors: $("mBtnDefaultCors"),
   mBtnSwitchDesktop: $("mBtnSwitchDesktop"),
 
   mMiniPlayer: $("mMiniPlayer"),
@@ -1500,6 +1502,14 @@ function bindEvents(): void {
   el.mBtnTestCors.addEventListener("click", async () => {
     const res = await testFishProxyConnectivity(el.mCorsInput.value.trim());
     toast(res.ok ? "ok" : "err", res.ok ? "代理连通正常" : "代理连通失败", res.message);
+  });
+  el.mBtnDefaultCors.addEventListener("click", () => {
+    const def = getDefaultCorsForEnv();
+    el.mCorsInput.value = def;
+    state.cors = def;
+    state.corsExplicit = false;
+    saveStateToStorage(state);
+    toast("ok", "已恢复默认云端代理", def);
   });
   el.mBtnSwitchDesktop.addEventListener("click", () => switchDeviceExperience("desktop"));
 

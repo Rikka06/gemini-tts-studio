@@ -47,11 +47,13 @@ function detectByUA(request) {
   return MOBILE_UA_RE.test(ua) ? "mobile" : "desktop";
 }
 
-function corsHeaders() {
+function corsHeaders(request) {
+  const reqHeaders = request?.headers?.get("Access-Control-Request-Headers");
   return {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
-    "Access-Control-Allow-Headers": "Authorization, Content-Type, model, Accept, Accept-Language, X-Requested-With",
+    "Access-Control-Allow-Headers":
+      reqHeaders || "Authorization, Content-Type, model, Accept, Accept-Language, X-Requested-With",
     "Access-Control-Expose-Headers": "Content-Type, Content-Length",
     "Access-Control-Max-Age": "86400",
   };
@@ -59,11 +61,13 @@ function corsHeaders() {
 
 async function proxyFishApi(request, url) {
   if (request.method === "OPTIONS") {
-    return new Response(null, { status: 204, headers: corsHeaders() });
+    return new Response(null, { status: 204, headers: corsHeaders(request) });
   }
   let upstreamPath = url.pathname;
   if (upstreamPath.startsWith("/api/fish")) {
     upstreamPath = upstreamPath.slice("/api/fish".length) || "/";
+  } else if (upstreamPath.startsWith("/https://api.fish.audio")) {
+    upstreamPath = upstreamPath.slice("/https://api.fish.audio".length) || "/";
   }
   const targetUrl = `${FISH_UPSTREAM}${upstreamPath}${url.search}`;
   const fwdHeaders = new Headers();
@@ -71,13 +75,21 @@ async function proxyFishApi(request, url) {
     const val = request.headers.get(name);
     if (val) fwdHeaders.set(name, val);
   }
+  fwdHeaders.set("User-Agent", "TTSStudioEdgeGateway/2.0");
+
+  const bodyBuf =
+    request.method === "GET" || request.method === "HEAD"
+      ? undefined
+      : await request.arrayBuffer();
+
   const upstreamRes = await fetch(targetUrl, {
     method: request.method,
     headers: fwdHeaders,
-    body: request.method === "GET" || request.method === "HEAD" ? undefined : request.body,
+    body: bodyBuf,
   });
   const outHeaders = new Headers(upstreamRes.headers);
-  for (const [k, v] of Object.entries(corsHeaders())) {
+  outHeaders.delete("set-cookie");
+  for (const [k, v] of Object.entries(corsHeaders(request))) {
     outHeaders.set(k, v);
   }
   return new Response(upstreamRes.body, {
@@ -91,8 +103,15 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname;
 
-    // 1. Fish Audio CORS 代理路由
-    if (path.startsWith("/api/fish/") || path.startsWith("/v1/") || path === "/model" || path.startsWith("/model/")) {
+    // 1. Fish Audio CORS 代理路由（支持 /api/fish/*、/v1/*、/model* 及 /https://api.fish.audio/*）
+    if (
+      path.startsWith("/api/fish/") ||
+      path === "/api/fish" ||
+      path.startsWith("/v1/") ||
+      path === "/model" ||
+      path.startsWith("/model/") ||
+      path.startsWith("/https://api.fish.audio")
+    ) {
       return proxyFishApi(request, url);
     }
 

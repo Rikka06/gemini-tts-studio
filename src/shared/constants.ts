@@ -11,6 +11,7 @@ export const FISH_DEFAULT_MODEL = "s2.1-pro-free";
 export const FISH_FALLBACK_MODELS = ["s2.1-pro-free"];
 
 export const LOCAL_DEFAULT_CORS = "http://127.0.0.1:8080/";
+export const CLOUD_DEFAULT_CORS = "https://tts-studio-gateway.rikkai.workers.dev/api/fish";
 
 export const STORE_KEY = "tts-studio-state-v1";
 export const THEME_KEY = "tts-studio-theme";
