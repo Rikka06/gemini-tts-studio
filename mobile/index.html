@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%230A84FF'/%3E%3Cpath d='M5 10v4M9 6v12M13 9v6M17 5v14' stroke='%23fff' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E" />
+  <title>TTS Studio · 移动工作台</title>
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("tts-studio-theme");
+        if (t === "dark" || t === "light") document.documentElement.setAttribute("data-theme", t);
+        else if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+          document.documentElement.setAttribute("data-theme", "dark");
+        }
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body>
+  <div class="m-shell" id="mShell">
+    <!-- 顶部极简状态栏：仅展示标题、引擎切换与主题/Key状态 -->
+    <header class="m-topbar" id="mTopbar">
+      <div class="m-brand">
+        <div class="m-logo" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 10v4"></path><path d="M8 6v12"></path><path d="M12 9v6"></path><path d="M16 5v14"></path><path d="M20 11v2"></path>
+          </svg>
+        </div>
+        <div>
+          <div class="m-title" id="mHeaderTitle">合成工作台</div>
+          <div class="m-subtitle" id="mHeaderSub">Gemini 3.8 Flash TTS</div>
+        </div>
+      </div>
+
+      <div class="m-engine-pill" id="mEngineSeg" role="tablist" aria-label="语音引擎">
+        <button type="button" role="tab" data-engine="gemini" aria-selected="true">Gemini</button>
+        <button type="button" role="tab" data-engine="fish" aria-selected="false">Fish</button>
+      </div>
+
+      <button class="m-icon-btn" id="mBtnKeyJump" type="button" aria-label="Key 池状态">
+        <span class="m-key-dot" id="mKeyDot"></span>
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="4.5"></circle><path d="m21 2-9.6 9.6"></path><path d="m15.5 7.5 3 3L22 7l-3-3"></path></svg>
+      </button>
+
+      <button class="m-icon-btn" id="mBtnTheme" type="button" aria-label="切换主题">
+        <svg id="mThemeIcon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></svg>
+      </button>
+    </header>
+
+    <!-- L1 主视图容器 -->
+    <main class="m-pages" id="mPages">
+      <!-- L1 Tab 1: 合成 Studio -->
+      <section class="m-page active" id="pageStudio" data-tab="studio" aria-label="合成">
+        <div class="m-canvas-card">
+          <div class="m-canvas-meta">
+            <span class="m-badge" id="mChunkBadge">单段直出</span>
+            <span class="m-stat" id="mCharStat">0 / 12000 · 0s</span>
+          </div>
+          <textarea id="mTextInput" class="m-textarea" spellcheck="false" maxlength="12000"
+            placeholder="输入或粘贴要朗读的文本…&#10;单手在下方选择音色与参数后，点击合成即可播放。"></textarea>
+
+          <div class="m-quick-bar">
+            <button class="m-pill-btn" id="mBtnSample" type="button">示例</button>
+            <button class="m-pill-btn" id="mBtnPaste" type="button">粘贴</button>
+            <button class="m-pill-btn" id="mBtnClear" type="button">清空</button>
+            <div class="m-tag-scroll" id="mFishTagRow" hidden></div>
+          </div>
+        </div>
+
+        <!-- HyperOS 拇指黄金操作区 Thumb Zone -->
+        <div class="m-thumb-dock" id="mThumbDock">
+          <button class="m-voice-capsule" id="mBtnVoiceCapsule" type="button" aria-label="快速切换音色">
+            <div class="mvc-avatar" id="mCapsuleAvatar">K</div>
+            <div class="mvc-text">
+              <div class="mvc-label">当前音色</div>
+              <div class="mvc-name" id="mCapsuleName">Kore · 温柔女声</div>
+            </div>
+            <svg class="mvc-chev" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>
+          </button>
+
+          <div class="m-dock-actions">
+            <button class="m-params-btn" id="mBtnParams" type="button" aria-label="合成参数设置">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
+              <span>参数</span>
+            </button>
+
+            <button class="m-gen-btn" id="mBtnGenerate" type="button">
+              <span class="m-gen-ico" id="mGenIcon"></span>
+              <span id="mGenLabel">生成语音</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- L1 Tab 2: 音色库 Voices -->
+      <section class="m-page" id="pageVoices" data-tab="voices" aria-label="音色库" hidden>
+        <div class="m-voices-sticky">
+          <div class="m-search-bar">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+            <input id="mVoiceSearch" type="search" spellcheck="false" autocomplete="off"
+              placeholder="搜索音色名称、风格、语言或 ID…" />
+            <button class="m-search-clear" id="mVoiceSearchClear" type="button" hidden aria-label="清除搜索">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+            </button>
+          </div>
+
+          <div class="m-chip-scroll" id="mFilterRow1"></div>
+          <div class="m-chip-scroll" id="mFilterRow2"></div>
+        </div>
+
+        <div class="m-voice-list" id="mVoiceList"></div>
+        <div class="m-load-more-wrap">
+          <button class="m-tonal-btn" id="mBtnLoadMore" type="button" hidden>加载更多音色</button>
+        </div>
+      </section>
+
+      <!-- L1 Tab 3: 记录与设置 Library & Settings -->
+      <section class="m-page" id="pageLibrary" data-tab="library" aria-label="记录与设置" hidden>
+        <!-- 分组 1：会话历史 -->
+        <div class="m-group">
+          <div class="m-group-head">
+            <span>本次会话历史</span>
+            <button class="m-text-btn" id="mBtnClearHistory" type="button" hidden>清空记录</button>
+          </div>
+          <div class="m-group-card" id="mHistoryList"></div>
+        </div>
+
+        <!-- 分组 2：收藏的 Fish 音色 -->
+        <div class="m-group">
+          <div class="m-group-head">
+            <span>收藏音色</span>
+            <span class="m-group-sub" id="mFavCount">0 个</span>
+          </div>
+          <div class="m-group-card" id="mFavList"></div>
+        </div>
+
+        <!-- 分组 3：API Key 池管理 -->
+        <div class="m-group" id="mKeySection">
+          <div class="m-group-head">
+            <span>API Key 池管理</span>
+            <div class="m-seg-mini" id="mKeyPoolTabs">
+              <button type="button" data-pool="gemini" aria-selected="true">Gemini</button>
+              <button type="button" data-pool="fish" aria-selected="false">Fish</button>
+            </div>
+          </div>
+          <div class="m-group-card m-card-pad">
+            <div class="m-row-between">
+              <span class="m-row-label">调度模式</span>
+              <div class="m-seg-mini" id="mKeyModeSeg">
+                <button type="button" data-mode="round" aria-selected="true">顺序轮询</button>
+                <button type="button" data-mode="pinned" aria-selected="false">指定主用</button>
+              </div>
+            </div>
+            <div id="mKeyList" class="m-key-list"></div>
+            <textarea id="mKeyInput" class="m-key-input" spellcheck="false" autocomplete="off"
+              placeholder="粘贴 API Key（每行一个）…"></textarea>
+            <div class="m-row-gap">
+              <button class="m-tonal-btn primary" id="mBtnAddKeys" type="button">添加到当前池</button>
+              <button class="m-tonal-btn danger" id="mBtnClearPoolKeys" type="button">清空</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 分组 4：Fish Audio CORS 代理与端版本切换 -->
+        <div class="m-group">
+          <div class="m-group-head">
+            <span>Fish 代理与显示设置</span>
+          </div>
+          <div class="m-group-card m-card-pad">
+            <label class="m-field-label" for="mCorsInput">Fish Audio CORS 代理地址（用于 /v1/tts 合成）</label>
+            <div class="m-row-gap" style="margin-top:8px">
+              <input id="mCorsInput" class="m-mono-input" type="url" spellcheck="false" autocomplete="off"
+                placeholder="https://your-worker.workers.dev/api/fish 或 http://127.0.0.1:8080/" />
+            </div>
+            <div class="m-row-gap" style="margin-top:10px">
+              <button class="m-tonal-btn primary" id="mBtnSaveCors" type="button">保存代理</button>
+              <button class="m-tonal-btn" id="mBtnTestCors" type="button">连通测试</button>
+            </div>
+            <p class="m-help-text">
+              提示：Fish 音色搜索与试听已直连官方接口；若在移动端通过 GitHub Pages 进行语音合成，可配置自建 Cloudflare Worker 代理（项目内置 <code>deploy/cloudflare-worker.js</code>）。
+            </p>
+            <div class="m-divider"></div>
+            <button class="m-list-action" id="mBtnSwitchDesktop" type="button">
+              <span>切换至桌面版界面</span>
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2.5"></rect><path d="M8 21h8M12 17v4"></path></svg>
+            </button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- L3 全局悬浮迷你播放器（位于底部 Tab 栏上方，跨 Tab 不断播） -->
+    <div class="m-mini-player" id="mMiniPlayer" hidden>
+      <div class="mmp-progress"><div class="mmp-progress-fill" id="mMiniProgress"></div></div>
+      <div class="mmp-row" id="mMiniOpenArea" role="button" tabindex="0" aria-label="展开完整播放器">
+        <div class="mmp-art" id="mMiniArt">
+          <div class="bars"><i></i><i></i><i></i><i></i></div>
+        </div>
+        <div class="mmp-meta">
+          <div class="mmp-title" id="mMiniTitle">暂无音频</div>
+          <div class="mmp-sub" id="mMiniSub">等待合成</div>
+        </div>
+        <button class="mmp-play" id="mMiniPlayBtn" type="button" aria-label="播放或暂停"></button>
+      </div>
+    </div>
+
+    <!-- L1 底部导航 Tab 栏 -->
+    <nav class="m-tabbar" aria-label="主导航">
+      <button class="m-tab active" type="button" data-tab="studio" aria-selected="true">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="22"></line></svg>
+        <span>合成</span>
+      </button>
+      <button class="m-tab" type="button" data-tab="voices" aria-selected="false">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+        <span>音色库</span>
+      </button>
+      <button class="m-tab" type="button" data-tab="library" aria-selected="false">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v5l3 2"></path></svg>
+        <span>记录与设置</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- L2 Bottom Sheet 遮罩 -->
+  <div class="m-sheet-scrim" id="mSheetScrim"></div>
+
+  <!-- L2 Sheet A: 音色详情与试听抽屉 -->
+  <section class="m-sheet" id="sheetVoiceDetail" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="m-sheet-handle" data-close-sheet="sheetVoiceDetail"><span></span></div>
+    <div class="m-sheet-head">
+      <div class="m-sheet-title">音色详情</div>
+      <button class="m-icon-btn" type="button" data-close-sheet="sheetVoiceDetail" aria-label="关闭"></button>
+    </div>
+    <div class="m-sheet-body" id="sheetVoiceDetailBody"></div>
+    <div class="m-sheet-footer" id="sheetVoiceDetailFooter"></div>
+  </section>
+
+  <!-- L2 Sheet B: 专业参数调节抽屉 -->
+  <section class="m-sheet" id="sheetParams" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="m-sheet-handle" data-close-sheet="sheetParams"><span></span></div>
+    <div class="m-sheet-head">
+      <div class="m-sheet-title" id="sheetParamsTitle">合成参数调节</div>
+      <button class="m-icon-btn" type="button" data-close-sheet="sheetParams" aria-label="关闭"></button>
+    </div>
+    <div class="m-sheet-body" id="sheetParamsBody"></div>
+  </section>
+
+  <!-- L2 Sheet C: 快速音色切换抽屉 -->
+  <section class="m-sheet" id="sheetQuickVoice" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="m-sheet-handle" data-close-sheet="sheetQuickVoice"><span></span></div>
+    <div class="m-sheet-head">
+      <div class="m-sheet-title">快速切换音色</div>
+      <button class="m-icon-btn" type="button" data-close-sheet="sheetQuickVoice" aria-label="关闭"></button>
+    </div>
+    <div class="m-sheet-body" id="sheetQuickVoiceBody"></div>
+  </section>
+
+  <!-- L2/L3 展开播放器抽屉 -->
+  <section class="m-sheet" id="sheetFullPlayer" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="m-sheet-handle" data-close-sheet="sheetFullPlayer"><span></span></div>
+    <div class="m-sheet-head">
+      <div class="m-sheet-title">正在播放</div>
+      <button class="m-icon-btn" type="button" data-close-sheet="sheetFullPlayer" aria-label="关闭"></button>
+    </div>
+    <div class="m-sheet-body" id="sheetFullPlayerBody"></div>
+  </section>
+
+  <!-- L3 Toast 提示层 -->
+  <div class="m-toasts" id="mToasts" aria-live="polite"></div>
+  <audio id="mAudioEl" preload="metadata"></audio>
+  <audio id="mPreviewAudioEl" preload="none"></audio>
+
+  <script type="module" src="/src/mobile/main.ts"></script>
+</body>
+</html>

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="color-scheme" content="light dark" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%230A84FF'/%3E%3Cpath d='M5 10v4M9 6v12M13 9v6M17 5v14' stroke='%23fff' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E" />
+  <title>TTS Studio · 正在识别设备</title>
+  <style>
+    html, body {
+      margin: 0;
+      height: 100%;
+      background: #F5F5F7;
+      color: #1D1D1F;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", sans-serif;
+    }
+    @media (prefers-color-scheme: dark) {
+      html, body { background: #0E0E10; color: #F5F5F7; }
+    }
+    .fallback {
+      min-height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      padding: 24px;
+      text-align: center;
+      opacity: 0;
+      animation: fadeIn .25s ease .45s forwards;
+    }
+    @keyframes fadeIn { to { opacity: 1; } }
+    .links { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+    .links a {
+      padding: 10px 18px;
+      border-radius: 999px;
+      background: #0A84FF;
+      color: #fff;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+    }
+  </style>
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("tts-studio-theme");
+        if (t === "dark") document.documentElement.style.backgroundColor = "#0E0E10";
+        else if (t === "light") document.documentElement.style.backgroundColor = "#F5F5F7";
+      } catch (_) {}
+
+      var COOKIE_NAME = "tts_device_mode";
+      var STORAGE_KEY = "tts-studio-device-mode";
+
+      function readCookie(name) {
+        var m = document.cookie.match(new RegExp("(?:^|;\\s*)" + name + "=([^;]*)"));
+        return m ? decodeURIComponent(m[1]) : "";
+      }
+
+      function saveOverride(mode) {
+        try {
+          if (mode === "auto") {
+            localStorage.removeItem(STORAGE_KEY);
+            document.cookie = COOKIE_NAME + "=; path=/; max-age=0; SameSite=Lax";
+          } else {
+            localStorage.setItem(STORAGE_KEY, mode);
+            document.cookie = COOKIE_NAME + "=" + encodeURIComponent(mode) + "; path=/; max-age=2592000; SameSite=Lax";
+          }
+        } catch (_) {}
+      }
+
+      function detectMobile() {
+        if (navigator.userAgentData && navigator.userAgentData.mobile === true) return true;
+        var ua = navigator.userAgent || "";
+        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|HarmonyOS|MicroMessenger|Windows Phone/i.test(ua)) {
+          return true;
+        }
+        if (/Macintosh/i.test(ua) && (navigator.maxTouchPoints || 0) > 1) return true;
+        if (window.innerWidth > 0 && window.innerWidth <= 768 && (navigator.maxTouchPoints || 0) > 0) return true;
+        return false;
+      }
+
+      var params = new URLSearchParams(window.location.search);
+      var view = params.get("view");
+      var target = "";
+
+      if (view === "desktop" || view === "mobile") {
+        saveOverride(view);
+        target = view;
+      } else if (view === "auto") {
+        saveOverride("auto");
+      }
+
+      if (!target) {
+        var stored = "";
+        try { stored = localStorage.getItem(STORAGE_KEY) || ""; } catch (_) {}
+        if (stored !== "desktop" && stored !== "mobile") {
+          stored = readCookie(COOKIE_NAME);
+        }
+        if (stored === "desktop" || stored === "mobile") {
+          target = stored;
+        } else {
+          target = detectMobile() ? "mobile" : "desktop";
+        }
+      }
+
+      var pathname = window.location.pathname;
+      if (!pathname.endsWith("/")) {
+        pathname = pathname.replace(/\/index\.html$/, "/");
+        if (!pathname.endsWith("/")) pathname += "/";
+      }
+      window.location.replace(pathname + target + "/" + window.location.search + window.location.hash);
+    })();
+  </script>
+</head>
+<body>
+  <div class="fallback">
+    <div>正在前往适合当前设备的 TTS Studio 界面…</div>
+    <div class="links">
+      <a href="./desktop/">进入桌面版</a>
+      <a href="./mobile/">进入移动版</a>
+    </div>
+  </div>
+  <noscript>
+    <div class="fallback" style="opacity:1">
+      <div>请启用 JavaScript，或手动选择要访问的端版本：</div>
+      <div class="links">
+        <a href="./desktop/">桌面版 Desktop</a>
+        <a href="./mobile/">移动版 Mobile</a>
+      </div>
+    </div>
+  </noscript>
+</body>
+</html>

@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="color-scheme" content="light dark" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%230A84FF'/%3E%3Cpath d='M5 10v4M9 6v12M13 9v6M17 5v14' stroke='%23fff' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E" />
+  <title>TTS Studio · Gemini TTS + Fish Audio 桌面工作台</title>
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("tts-studio-theme");
+        if (t === "dark" || t === "light") document.documentElement.setAttribute("data-theme", t);
+        else if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+          document.documentElement.setAttribute("data-theme", "dark");
+        }
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body>
+  <header class="topbar" id="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="logo" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 10v4"></path><path d="M8 6v12"></path><path d="M12 9v6"></path><path d="M16 5v14"></path><path d="M20 11v2"></path>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <div class="brand-title">TTS Studio</div>
+          <div class="brand-sub" id="engineSub">Gemini 3.8 Flash TTS · 桌面工作台</div>
+        </div>
+      </div>
+
+      <div class="spacer"></div>
+
+      <div class="segmented" id="engineSeg" role="tablist" aria-label="引擎选择">
+        <span class="thumb" id="segThumb" aria-hidden="true"></span>
+        <button type="button" role="tab" data-engine="gemini" aria-selected="true">
+          <span class="eng-dot" aria-hidden="true"></span>Gemini 3.8 Flash TTS
+        </button>
+        <button type="button" role="tab" data-engine="fish" aria-selected="false">
+          <span class="eng-dot" aria-hidden="true"></span>Fish Audio
+        </button>
+      </div>
+
+      <button class="key-chip" id="btnKeyPool" type="button" title="打开 Key 池与代理管理">
+        <span class="k-icon" aria-hidden="true">🔑</span>
+        <span>Key 池管理</span>
+        <span class="k-count" id="keyCountChip">在线 0 个</span>
+      </button>
+
+      <button class="mode-switch-btn" id="btnSwitchMobile" type="button" title="切换到移动端触控体验">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2.5"></rect><path d="M11 18h2"></path></svg>
+        <span>移动版</span>
+      </button>
+
+      <button class="icon-btn" id="btnTheme" type="button" title="切换深浅色" aria-label="切换深浅色">
+        <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="4"></circle>
+          <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="grid">
+      <!-- 左栏：文本输入 & 会话历史 -->
+      <div>
+        <section class="card card-pad">
+          <div class="card-head">
+            <div class="card-title"><span class="pip"></span>朗读文本</div>
+            <span class="card-hint" id="chunkHint">单段直出</span>
+          </div>
+
+          <div class="textarea-wrap">
+            <textarea id="textInput" spellcheck="false" maxlength="12000"
+              placeholder="在这里输入或粘贴要朗读的文本…&#10;&#10;支持中英文混排、数字与标点停顿。Gemini 会按句自动分段合成；Fish Audio 单次请求上限约 2000 字。"></textarea>
+            <div class="counter" id="counter">0 / 12000</div>
+          </div>
+
+          <div class="chip-row">
+            <button class="chip" id="btnSample" type="button">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"></path></svg>
+              示例文本
+            </button>
+            <button class="chip" id="btnPaste" type="button">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2.5"></rect><path d="M15 5.5A2.5 2.5 0 0 0 12.5 3H6.5A3.5 3.5 0 0 0 3 6.5v6A2.5 2.5 0 0 0 5.5 15"></path></svg>
+              粘贴
+            </button>
+            <button class="chip" id="btnClear" type="button">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4.8A1.8 1.8 0 0 1 10.8 3h2.4A1.8 1.8 0 0 1 15 4.8V7M6.5 7l.8 12.2A1.8 1.8 0 0 0 9.1 21h5.8a1.8 1.8 0 0 0 1.8-1.8L17.5 7"></path></svg>
+              清空
+            </button>
+          </div>
+
+          <div class="tag-row" id="fishTagRow" hidden></div>
+
+          <div class="est-bar">
+            <span class="eng-badge" id="engBadge">Gemini</span>
+            <span>预计时长 <b id="estDur">0 秒</b></span>
+            <span class="dot-sep">·</span>
+            <span>当前音色 <b id="curVoiceLabel">Kore</b></span>
+            <span style="margin-left:auto;opacity:.8">⌘ / Ctrl + Enter 生成</span>
+          </div>
+        </section>
+
+        <section class="card card-pad">
+          <div class="card-head">
+            <div class="card-title"><span class="pip"></span>本次会话历史</div>
+            <span class="card-hint" id="hisHint">0 条</span>
+            <button class="mini-btn ghost danger" id="btnClearHistory" type="button" style="margin-left:6px" hidden>清空</button>
+          </div>
+          <div class="h-list" id="hisList"></div>
+          <div class="empty" id="hisEmpty">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v5l3 2"></path><circle cx="12" cy="12" r="9"></circle></svg>
+            <div>还没有生成记录<br>合成结果会保存在这里，随时回放无需重复消耗额度</div>
+          </div>
+        </section>
+      </div>
+
+      <!-- 右栏：音色与合成参数 -->
+      <div>
+        <!-- Gemini 面板 -->
+        <section class="card card-pad" id="panelGemini">
+          <div class="card-head">
+            <div class="card-title"><span class="pip"></span>Gemini 音色</div>
+            <span class="card-hint">30 种预设</span>
+          </div>
+          <div class="voice-grid" id="voiceGrid" role="radiogroup" aria-label="Gemini 音色选择"></div>
+        </section>
+
+        <!-- Fish Audio 升级面板 -->
+        <section class="card card-pad" id="panelFish" hidden>
+          <div class="card-head">
+            <div class="card-title"><span class="pip fish"></span>Fish 音色工作台</div>
+            <button class="mini-btn primary" id="btnOpenExplorer" type="button">探索音色库</button>
+          </div>
+
+          <!-- 当前已选 Fish 音色卡片 -->
+          <div class="active-fish-card" id="activeFishCard"></div>
+
+          <!-- 快速搜索与打开音色库入口 -->
+          <div class="fish-quick-search">
+            <svg class="fqs-ico" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+            <input id="fishQuickSearchInput" type="search" spellcheck="false" autocomplete="off"
+              placeholder="搜索 Fish Audio 音色名称、标签或作者…" />
+            <button class="mini-btn" id="btnQuickSearchGo" type="button">搜索</button>
+          </div>
+          <div class="quick-search-results" id="quickSearchResults" hidden></div>
+
+          <!-- 手动输入 ID 与收藏 -->
+          <div class="section-label" style="margin-top:16px">
+            <span>音色模型 ID (reference_id)</span>
+            <span class="lv-note">支持输入 ID 自动解析名称</span>
+          </div>
+          <div class="soft-field">
+            <input id="refInput" type="text" spellcheck="false" autocomplete="off"
+              placeholder="输入 32 位 reference_id（留空使用 S2.1 默认音色）" />
+          </div>
+
+          <div class="book-row">
+            <input id="bookName" type="text" spellcheck="false" autocomplete="off"
+              placeholder="自定义别名（留空自动使用 API 模型名）"
+              class="book-name-input" />
+            <button class="mini-btn primary" id="btnSaveBook" type="button">收藏</button>
+          </div>
+          <div class="book-list" id="bookList"></div>
+
+          <div class="section-label" style="margin-top:16px">
+            <span>精选热门音色</span>
+            <span class="lv-note">点击即选 · 右侧可试听</span>
+          </div>
+          <div class="preset-rich-grid" id="refPresets"></div>
+
+          <!-- Fish 基础语速 / 音量 / 模型选择 -->
+          <div class="field" style="margin-top:18px">
+            <div class="f-head">
+              <span class="f-label">合成模型</span>
+              <span class="f-note">model header</span>
+            </div>
+            <div class="model-pill-row" id="fishModelRow"></div>
+          </div>
+
+          <div class="field">
+            <div class="f-head">
+              <span class="f-label">语速</span>
+              <span class="f-note">prosody.speed</span>
+              <span class="f-val" id="valFishSpeed">1.00×</span>
+            </div>
+            <input type="range" id="rngFishSpeed" min="50" max="200" step="5" value="100" aria-label="Fish 语速">
+            <div class="f-ticks"><span>0.50×</span><span>1.00×</span><span>2.00×</span></div>
+          </div>
+
+          <div class="field">
+            <div class="f-head">
+              <span class="f-label">音量</span>
+              <span class="f-note">prosody.volume</span>
+              <span class="f-val" id="valFishVolume">0 dB</span>
+            </div>
+            <input type="range" id="rngFishVolume" min="-20" max="20" step="1" value="0" aria-label="Fish 音量">
+            <div class="f-ticks"><span>-20 dB</span><span>0 dB</span><span>+20 dB</span></div>
+          </div>
+
+          <!-- 高级参数折叠面板 -->
+          <details class="adv-details" id="fishAdvDetails">
+            <summary class="adv-summary">
+              <span>高级合成参数（格式 / 采样率 / 采样随机度）</span>
+              <span class="adv-badge" id="fishAdvSummaryText">MP3 128k · T=0.70</span>
+            </summary>
+            <div class="adv-body">
+              <div class="adv-row-2">
+                <label class="adv-ctrl">
+                  <span>输出格式 format</span>
+                  <select id="selFishFormat">
+                    <option value="mp3">MP3（通用推荐）</option>
+                    <option value="wav">WAV（无损 PCM）</option>
+                    <option value="opus">Opus（轻量高压缩）</option>
+                    <option value="pcm">PCM（自动封装 WAV）</option>
+                  </select>
+                </label>
+                <label class="adv-ctrl" id="wrapFishBitrate">
+                  <span>音频码率</span>
+                  <select id="selFishBitrate">
+                    <option value="64">64 kbps</option>
+                    <option value="128" selected>128 kbps</option>
+                    <option value="192">192 kbps</option>
+                  </select>
+                </label>
+              </div>
+              <div class="adv-row-2">
+                <label class="adv-ctrl">
+                  <span>采样率 sample_rate</span>
+                  <select id="selFishSampleRate">
+                    <option value="0">自动默认</option>
+                    <option value="24000">24,000 Hz</option>
+                    <option value="32000">32,000 Hz</option>
+                    <option value="44100">44,100 Hz</option>
+                    <option value="48000">48,000 Hz</option>
+                  </select>
+                </label>
+                <label class="adv-ctrl">
+                  <span>延迟策略 latency</span>
+                  <select id="selFishLatency">
+                    <option value="balanced">balanced（均衡）</option>
+                    <option value="normal">normal（标准高质量）</option>
+                  </select>
+                </label>
+              </div>
+
+              <div class="field" style="margin-top:12px">
+                <div class="f-head">
+                  <span class="f-label">随机度 Temperature</span>
+                  <span class="f-val" id="valFishTemp">0.70</span>
+                </div>
+                <input type="range" id="rngFishTemp" min="0" max="100" step="5" value="70" aria-label="Temperature">
+              </div>
+
+              <div class="field">
+                <div class="f-head">
+                  <span class="f-label">核采样 Top-P</span>
+                  <span class="f-val" id="valFishTopP">0.70</span>
+                </div>
+                <input type="range" id="rngFishTopP" min="0" max="100" step="5" value="70" aria-label="Top-P">
+              </div>
+
+              <div class="field">
+                <div class="f-head">
+                  <span class="f-label">重复惩罚 Repetition Penalty</span>
+                  <span class="f-val" id="valFishRep">1.20</span>
+                </div>
+                <input type="range" id="rngFishRep" min="100" max="200" step="5" value="120" aria-label="Repetition Penalty">
+              </div>
+
+              <div class="field">
+                <div class="f-head">
+                  <span class="f-label">文本分块长度 Chunk Length</span>
+                  <span class="f-val" id="valFishChunk">200</span>
+                </div>
+                <input type="range" id="rngFishChunk" min="100" max="300" step="10" value="200" aria-label="Chunk Length">
+              </div>
+
+              <div class="adv-switch-row">
+                <span>文本正则化 Normalize</span>
+                <button class="switch" id="btnFishNorm" type="button" role="switch" aria-checked="true" aria-label="启用文本正则化">
+                  <span class="switch-track"><span class="switch-thumb"></span></span>
+                  <span class="switch-label" id="fishNormLabel">已启用</span>
+                </button>
+              </div>
+            </div>
+          </details>
+
+          <button class="mini-btn ghost cors-pill-btn" id="hintFishCors" type="button">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 8h.01M11 12h1v4h1"></path></svg>
+            <span id="corsStateText">CORS 代理：未启用（直连）</span>
+          </button>
+        </section>
+
+        <!-- 合成参数 & 生成按钮 -->
+        <section class="card card-pad" style="margin-top:20px">
+          <div class="card-head">
+            <div class="card-title"><span class="pip"></span>合成参数</div>
+            <span class="card-hint">实时生效</span>
+          </div>
+
+          <div class="field">
+            <div class="f-head">
+              <span class="f-label">播放语速</span>
+              <span class="f-note">仅影响播放</span>
+              <span class="f-val" id="valRate">1.00×</span>
+            </div>
+            <input type="range" id="rngRate" min="60" max="180" step="5" value="100" aria-label="播放语速">
+            <div class="f-ticks"><span>0.60×</span><span>1.00×</span><span>1.80×</span></div>
+          </div>
+
+          <div id="geminiExtra">
+            <div class="field">
+              <div class="f-head">
+                <span class="f-label">停顿密度</span>
+                <span class="f-note">影响朗读节奏</span>
+                <span class="f-val" id="valPause">50</span>
+              </div>
+              <input type="range" id="rngPause" min="0" max="100" step="1" value="50" aria-label="停顿密度">
+              <div class="f-ticks"><span>紧凑</span><span>自然</span><span>舒缓</span></div>
+            </div>
+
+            <div class="field">
+              <div class="f-head">
+                <span class="f-label">情绪强度</span>
+                <span class="f-note">影响语气起伏</span>
+                <span class="f-val" id="valEmotion">60</span>
+              </div>
+              <input type="range" id="rngEmotion" min="0" max="100" step="1" value="60" aria-label="情绪强度">
+              <div class="f-ticks"><span>克制</span><span>自然</span><span>饱满</span></div>
+            </div>
+
+            <div class="section-label">
+              <span>语气 / 风格指令</span>
+              <button class="switch" id="btnStyleToggle" type="button" role="switch" aria-checked="true" aria-label="启用风格指令" title="关闭后只按正文朗读">
+                <span class="switch-track"><span class="switch-thumb"></span></span>
+                <span class="switch-label" id="styleToggleLabel">已启用</span>
+              </button>
+            </div>
+            <div class="soft-field style-wrap" id="styleWrap">
+              <textarea id="styleInput" spellcheck="false" maxlength="600"
+                placeholder="自然语言描述，例如：用新闻联播的严肃语气朗读；温柔低沉地讲睡前故事。"></textarea>
+            </div>
+            <div class="preset-row" id="stylePresets"></div>
+          </div>
+
+          <div class="gen-wrap">
+            <button class="btn-primary" id="btnGenerate" type="button">
+              <span id="genIcon">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"></path></svg>
+              </span>
+              <span id="genLabel">生成语音</span>
+              <span class="btn-kbd">⌘↵</span>
+            </button>
+            <div class="gen-note">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 8h.01M11 12h1v4h1"></path></svg>
+              <span id="genNote">Gemini 免费层级每分钟 3 次 / 每天 10 次；触发限流会自动切换 Key 池中的下一个可用 Key</span>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <!-- 悬浮玻璃播放器 -->
+  <div class="player" id="player">
+    <div class="p-row">
+      <div class="p-art" id="pArt" aria-hidden="true">
+        <div class="bars"><i></i><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="p-meta">
+        <div class="p-title" id="pTitle">暂无音频</div>
+        <div class="p-sub" id="pSub">输入文本后点击「生成语音」</div>
+      </div>
+
+      <div class="p-transport">
+        <button class="p-play" id="btnPlay" type="button" disabled aria-label="播放">
+          <svg id="playIcon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.14v13.72a1 1 0 0 0 1.54.84l10.29-6.86a1 1 0 0 0 0-1.68L9.54 4.3A1 1 0 0 0 8 5.14z"/></svg>
+        </button>
+        <div class="p-time"><span id="tCur">0:00</span><span class="sep">/</span><span id="tDur">0:00</span></div>
+      </div>
+
+      <div class="p-wave" id="pWave" aria-hidden="true"></div>
+
+      <div class="p-tail">
+        <button class="speed-btn" id="btnSpeed" type="button" title="切换播放倍速" aria-label="切换播放倍速">
+          <span id="speedLabel">1.0×</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg>
+        </button>
+
+        <button class="dl-btn" id="btnDownload" type="button" disabled title="下载音频">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"></path><path d="M7.5 10.5L12 15l4.5-4.5"></path><path d="M4 20h16"></path></svg>
+          <span>下载</span>
+        </button>
+        <button class="dl-more" id="btnDlMore" type="button" disabled title="更多下载选项" aria-label="更多下载选项">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><circle cx="12" cy="5" r="1.7"></circle><circle cx="12" cy="12" r="1.7"></circle><circle cx="12" cy="19" r="1.7"></circle></svg>
+        </button>
+
+        <div class="menu" id="dlMenu" role="menu" aria-label="下载选项">
+          <button class="menu-item" id="miNative" type="button" role="menuitem">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"></path><path d="M7.5 10.5L12 15l4.5-4.5"></path><path d="M4 20h16"></path></svg>
+            下载原始音频
+            <span class="mi-sub" id="nativeFmtSub">WAV</span>
+          </button>
+          <button class="menu-item" id="miWav" type="button" role="menuitem">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10v4M8 7v10M12 10v4M16 6v12M20 11v2"></path></svg>
+            下载 WAV
+            <span class="mi-sub">PCM 24kHz</span>
+          </button>
+          <div class="menu-sep"></div>
+          <button class="menu-item" id="miCopyB64" type="button" role="menuitem">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2.5"></rect><path d="M15 5.5A2.5 2.5 0 0 0 12.5 3H6.5A3.5 3.5 0 0 0 3 6.5v6A2.5 2.5 0 0 0 5.5 15"></path></svg>
+            复制 Base64
+            <span class="mi-sub">原始音频</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="p-progress">
+      <input class="seek" id="seek" type="range" min="0" max="1000" step="1" value="0" aria-label="播放进度" disabled>
+    </div>
+  </div>
+
+  <!-- Key 池与 CORS 代理抽屉 -->
+  <div class="scrim" id="scrim"></div>
+  <aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawerTitle" aria-hidden="true">
+    <div class="drawer-head">
+      <div style="min-width:0">
+        <div class="drawer-title" id="drawerTitle">🔑 Key 池与代理管理</div>
+        <div class="drawer-sub" id="drawerSub">自动轮询与故障转移 · 仅存储在本地浏览器</div>
+      </div>
+      <div class="spacer"></div>
+      <button class="icon-btn" id="btnDrawerClose" type="button" title="关闭" aria-label="关闭">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+      </button>
+    </div>
+
+    <div class="drawer-body">
+      <div class="k-tabs" role="tablist" aria-label="Key 类型">
+        <button class="k-tab" type="button" role="tab" data-pool="gemini" aria-selected="true">
+          Gemini <span class="cnt" id="tabCntGemini">0</span>
+        </button>
+        <button class="k-tab" type="button" role="tab" data-pool="fish" aria-selected="false">
+          Fish Audio <span class="cnt" id="tabCntFish">0</span>
+        </button>
+      </div>
+
+      <div class="mode-row">
+        <span class="mode-label">调度模式</span>
+        <div class="mini-seg" id="modeSeg">
+          <button type="button" data-mode="round" aria-selected="true">顺序轮询</button>
+          <button type="button" data-mode="pinned" aria-selected="false">指定主用</button>
+        </div>
+      </div>
+
+      <div id="keyList"></div>
+      <div class="empty" id="keyEmpty" hidden style="padding:22px 10px">
+        <div>该池内暂无 Key<br>把你的 API Key 粘贴到下方即可添加（仅存 localStorage）</div>
+      </div>
+
+      <div class="add-box">
+        <div class="section-label" style="margin:0 0 8px">
+          <span>批量新增</span>
+          <span class="lv-note">每行一个，自动去重</span>
+        </div>
+        <textarea id="keyInput" spellcheck="false" autocomplete="off"
+          placeholder="粘贴 Key，每行一个&#10;AIza... 或 sk-fish-..."></textarea>
+        <div class="add-row">
+          <button class="mini-btn primary" id="btnAddKeys" type="button">添加到当前池</button>
+          <div class="grow"></div>
+          <button class="mini-btn ghost danger" id="btnClearPoolKeys" type="button">清空当前池</button>
+        </div>
+
+        <div class="section-label" style="margin:18px 0 8px">
+          <span>Fish Audio CORS 代理</span>
+          <span class="lv-note" id="proxyTestBadge"></span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input id="corsInput" type="text" spellcheck="false" autocomplete="off"
+            placeholder="例如 http://127.0.0.1:8080/ 或 Cloudflare Worker URL"
+            class="cors-input" />
+          <button class="mini-btn primary" id="btnSaveCors" type="button">保存</button>
+          <button class="mini-btn ghost" id="btnTestCors" type="button">测试</button>
+        </div>
+
+        <div class="hint-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 8h.01M11 12h1v4h1"></path></svg>
+          <div>
+            <b>说明：</b>Fish 音色搜索/试听已直连官方 CORS 接口；但 <code>POST /v1/tts</code> 浏览器预检需经本地 <code>server.py</code> (<code>http://127.0.0.1:8080/</code>) 或自建 Cloudflare Worker（项目内已附带 <code>deploy/cloudflare-worker.js</code>）。
+            <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
+              <button class="mini-btn ghost" id="btnUseLocalCors" type="button">填入本地 8080</button>
+              <button class="mini-btn ghost" id="btnCopyWorker" type="button">复制 Worker 脚本</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Fish Audio 完整音色发现弹窗 -->
+  <div class="modal-scrim" id="explorerScrim"></div>
+  <section class="explorer-modal" id="explorerModal" role="dialog" aria-modal="true" aria-labelledby="explorerTitle" aria-hidden="true">
+    <div class="explorer-head">
+      <div class="explorer-title-wrap">
+        <div class="explorer-title" id="explorerTitle">Fish Audio 音色广场</div>
+        <div class="explorer-sub" id="explorerSub">实时检索官方开放音色库 · 点击试听、收藏或设为当前音色</div>
+      </div>
+      <div class="explorer-search-box">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+        <input id="expSearchInput" type="search" spellcheck="false" autocomplete="off"
+          placeholder="搜索音色标题、描述、角色、风格标签…" />
+        <button class="mini-btn ghost" id="expSearchClear" type="button" hidden>清除</button>
+      </div>
+      <button class="icon-btn" id="btnCloseExplorer" type="button" title="关闭音色广场" aria-label="关闭音色广场">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+      </button>
+    </div>
+
+    <div class="explorer-filters">
+      <div class="filter-strip" id="expLangStrip"></div>
+      <div class="filter-strip" id="expTagStrip"></div>
+      <div class="filter-meta-row">
+        <div class="mini-seg" id="expSortSeg"></div>
+        <label class="self-check">
+          <input type="checkbox" id="expSelfOnly" />
+          <span>仅看我的音色</span>
+        </label>
+        <span class="exp-count" id="expTotalCount">加载中…</span>
+      </div>
+    </div>
+
+    <div class="explorer-body" id="explorerBody">
+      <div class="exp-grid" id="expGrid"></div>
+      <div class="exp-load-footer" id="expLoadFooter">
+        <button class="mini-btn ghost" id="btnExpMore" type="button" hidden>加载更多音色</button>
+      </div>
+    </div>
+  </section>
+
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+  <audio id="audioEl" preload="metadata"></audio>
+  <audio id="previewAudioEl" preload="none"></audio>
+
+  <script type="module" src="/src/desktop/main.ts"></script>
+</body>
+</html>

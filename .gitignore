@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.local-keys.json
+*.log
+*.err
+.DS_Store
+Thumbs.db
